@@ -3,15 +3,19 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session, joinedload
 
-from app.dependencies import get_db
-from app.models import Customer, Vehicle, VehicleOwnerHistory
+from app.dependencies import get_current_user, get_db
+from app.models import Customer, User, Vehicle, VehicleOwnerHistory
 from app.schemas.vehicle import VehicleCreate, VehicleOwnerHistoryRead, VehicleRead
 
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
 
 @router.post("", response_model=VehicleRead, status_code=status.HTTP_201_CREATED)
-def create_vehicle(payload: VehicleCreate, db: Session = Depends(get_db)) -> Vehicle:
+def create_vehicle(
+    payload: VehicleCreate,
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(get_current_user),
+) -> Vehicle:
     existing = (
         db.query(Vehicle)
         .options(joinedload(Vehicle.current_owner))
@@ -51,6 +55,7 @@ def list_vehicles(
     plate: str | None = Query(default=None, description="Filter by license plate"),
     shop_id: int | None = Query(default=None, description="Filter by shop"),
     db: Session = Depends(get_db),
+    _current_user: User = Depends(get_current_user),
 ) -> list[Vehicle]:
     query = db.query(Vehicle).options(joinedload(Vehicle.current_owner))
     if plate:
@@ -61,7 +66,11 @@ def list_vehicles(
 
 
 @router.get("/{vehicle_id}", response_model=VehicleRead)
-def get_vehicle(vehicle_id: int, db: Session = Depends(get_db)) -> Vehicle:
+def get_vehicle(
+    vehicle_id: int,
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(get_current_user),
+) -> Vehicle:
     vehicle = (
         db.query(Vehicle)
         .options(joinedload(Vehicle.current_owner))
@@ -74,7 +83,11 @@ def get_vehicle(vehicle_id: int, db: Session = Depends(get_db)) -> Vehicle:
 
 
 @router.get("/{vehicle_id}/owners", response_model=list[VehicleOwnerHistoryRead])
-def get_owner_history(vehicle_id: int, db: Session = Depends(get_db)) -> list[VehicleOwnerHistory]:
+def get_owner_history(
+    vehicle_id: int,
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(get_current_user),
+) -> list[VehicleOwnerHistory]:
     vehicle = db.get(Vehicle, vehicle_id)
     if not vehicle:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")

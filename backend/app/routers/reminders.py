@@ -3,8 +3,8 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_db
-from app.models import Reminder, ServiceVisit, Vehicle
+from app.dependencies import get_current_user, get_db
+from app.models import Reminder, ServiceVisit, User, Vehicle
 from app.schemas.reminder import ReminderPreviewResponse, ReminderRead
 
 router = APIRouter(prefix="/vehicles/{vehicle_id}/reminders", tags=["reminders"])
@@ -13,7 +13,9 @@ DEFAULT_KM_INTERVAL = 10000
 
 
 @router.get("", response_model=list[ReminderRead])
-def list_reminders(vehicle_id: int, db: Session = Depends(get_db)) -> list[Reminder]:
+def list_reminders(
+    vehicle_id: int, db: Session = Depends(get_db), _current_user: User = Depends(get_current_user)
+) -> list[Reminder]:
     vehicle = db.get(Vehicle, vehicle_id)
     if not vehicle:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
@@ -26,7 +28,9 @@ def list_reminders(vehicle_id: int, db: Session = Depends(get_db)) -> list[Remin
 
 
 @router.post("/preview", response_model=ReminderPreviewResponse, status_code=status.HTTP_200_OK)
-def preview_reminder(vehicle_id: int, db: Session = Depends(get_db)) -> ReminderPreviewResponse:
+def preview_reminder(
+    vehicle_id: int, db: Session = Depends(get_db), _current_user: User = Depends(get_current_user)
+) -> ReminderPreviewResponse:
     vehicle = db.get(Vehicle, vehicle_id)
     if not vehicle:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")

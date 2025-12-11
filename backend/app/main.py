@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
 from app.database.db import init_db
-from app.routers import appointments, customers, health, reminders, shops, vehicles, visits
+from app.routers import appointments, auth, customers, health, reminders, shops, vehicles, visits
 
 settings = get_settings()
 
@@ -24,6 +24,7 @@ def on_startup() -> None:
 
 
 app.include_router(health.router)
+app.include_router(auth.router)
 app.include_router(shops.router)
 app.include_router(customers.router)
 app.include_router(vehicles.router)

@@ -1,15 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 
-from app.dependencies import get_db
-from app.models import Appointment, AppointmentStatus, Shop, Vehicle
+from app.dependencies import get_current_user, get_db
+from app.models import Appointment, AppointmentStatus, Shop, User, Vehicle
 from app.schemas.appointment import AppointmentCreate, AppointmentRead
 
 router = APIRouter(prefix="/appointments", tags=["appointments"])
 
 
 @router.post("", response_model=AppointmentRead, status_code=status.HTTP_201_CREATED)
-def create_appointment(payload: AppointmentCreate, db: Session = Depends(get_db)) -> Appointment:
+def create_appointment(
+    payload: AppointmentCreate,
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(get_current_user),
+) -> Appointment:
     vehicle = db.get(Vehicle, payload.vehicle_id)
     if not vehicle:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
@@ -33,7 +37,9 @@ def create_appointment(payload: AppointmentCreate, db: Session = Depends(get_db)
 
 @router.get("", response_model=list[AppointmentRead])
 def list_appointments(
-    shop_id: int | None = None, db: Session = Depends(get_db)
+    shop_id: int | None = None,
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(get_current_user),
 ) -> list[Appointment]:
     query = db.query(Appointment)
     if shop_id:

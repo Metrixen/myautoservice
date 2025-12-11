@@ -1,1 +1,10 @@
-from app.routers import appointments, customers, health, reminders, shops, vehicles, visits  # noqa: F401
+from app.routers import (  # noqa: F401
+    appointments,
+    auth,
+    customers,
+    health,
+    reminders,
+    shops,
+    vehicles,
+    visits,
+)

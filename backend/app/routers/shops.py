@@ -1,15 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_db
-from app.models import Shop
+from app.dependencies import get_current_user, get_db
+from app.models import Shop, User
 from app.schemas.shop import ShopCreate, ShopRead
 
 router = APIRouter(prefix="/shops", tags=["shops"])
 
 
 @router.post("", response_model=ShopRead, status_code=status.HTTP_201_CREATED)
-def create_shop(payload: ShopCreate, db: Session = Depends(get_db)) -> Shop:
+def create_shop(
+    payload: ShopCreate,
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(get_current_user),
+) -> Shop:
     existing = db.query(Shop).filter(Shop.name == payload.name).first()
     if existing:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Shop name already exists")
@@ -22,5 +26,7 @@ def create_shop(payload: ShopCreate, db: Session = Depends(get_db)) -> Shop:
 
 
 @router.get("", response_model=list[ShopRead])
-def list_shops(db: Session = Depends(get_db)) -> list[Shop]:
+def list_shops(
+    db: Session = Depends(get_db), _current_user: User = Depends(get_current_user)
+) -> list[Shop]:
     return db.query(Shop).order_by(Shop.name).all()

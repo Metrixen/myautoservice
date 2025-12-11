@@ -3,8 +3,8 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 
-from app.dependencies import get_db
-from app.models import ServiceLineItem, ServiceVisit, Vehicle
+from app.dependencies import get_current_user, get_db
+from app.models import ServiceLineItem, ServiceVisit, User, Vehicle
 from app.schemas.service_visit import ServiceVisitCreate, ServiceVisitRead
 
 router = APIRouter(prefix="/vehicles/{vehicle_id}/visits", tags=["service_visits"])
@@ -12,7 +12,10 @@ router = APIRouter(prefix="/vehicles/{vehicle_id}/visits", tags=["service_visits
 
 @router.post("", response_model=ServiceVisitRead, status_code=status.HTTP_201_CREATED)
 def create_visit(
-    vehicle_id: int, payload: ServiceVisitCreate, db: Session = Depends(get_db)
+    vehicle_id: int,
+    payload: ServiceVisitCreate,
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(get_current_user),
 ) -> ServiceVisit:
     vehicle = (
         db.query(Vehicle)
@@ -48,7 +51,9 @@ def create_visit(
 
 
 @router.get("", response_model=list[ServiceVisitRead])
-def list_visits(vehicle_id: int, db: Session = Depends(get_db)) -> list[ServiceVisit]:
+def list_visits(
+    vehicle_id: int, db: Session = Depends(get_db), _current_user: User = Depends(get_current_user)
+) -> list[ServiceVisit]:
     vehicle = db.get(Vehicle, vehicle_id)
     if not vehicle:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
