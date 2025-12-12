@@ -27,3 +27,4 @@ class Shop(Base):
     vehicles: Mapped[List["Vehicle"]] = relationship("Vehicle", back_populates="shop", cascade="all, delete")
     visits: Mapped[List["ServiceVisit"]] = relationship("ServiceVisit", back_populates="shop", cascade="all, delete")
     appointments: Mapped[List["Appointment"]] = relationship("Appointment", back_populates="shop", cascade="all, delete")
+    customers: Mapped[List["Customer"]] = relationship("Customer", back_populates="shop", cascade="all, delete")
